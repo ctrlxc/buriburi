@@ -1,121 +1,216 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart';
+import 'package:qr_flutter/qr_flutter.dart';
+import 'package:json_annotation/json_annotation.dart';
+
+part 'main.g.dart';
 
 void main() {
-  runApp(MyApp());
+  runApp(BuriBuriApp());
 }
 
-class MyApp extends StatelessWidget {
+class BuriBuriApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: [
+        const Locale('en'),
+        const Locale('ja'),
+      ],
+      title: 'BuriBuri',
       theme: ThemeData(
-        // This is the theme of your application.
-        //
-        // Try running your application with "flutter run". You'll see the
-        // application has a blue toolbar. Then, without quitting the app, try
-        // changing the primarySwatch below to Colors.green and then invoke
-        // "hot reload" (press "r" in the console where you ran "flutter run",
-        // or simply save your changes to "hot reload" in a Flutter IDE).
-        // Notice that the counter didn't reset back to zero; the application
-        // is not restarted.
-        primarySwatch: Colors.blue,
-        // This makes the visual density adapt to the platform that you run
-        // the app on. For desktop platforms, the controls will be smaller and
-        // closer together (more dense) than on mobile platforms.
+        primarySwatch: Colors.red,
         visualDensity: VisualDensity.adaptivePlatformDensity,
+        fontFamily: "Azuki",
       ),
-      home: BuriBuri(title: 'Flutter Demo Home Page'),
+      home: BuriBuri(),
     );
   }
 }
 
 class BuriBuri extends StatefulWidget {
-  BuriBuri({Key key, this.title}) : super(key: key);
-
-  // This widget is the home page of your application. It is stateful, meaning
-  // that it has a State object (defined below) that contains fields that affect
-  // how it looks.
-
-  // This class is the configuration for the state. It holds the values (in this
-  // case the title) provided by the parent (in this case the App widget) and
-  // used by the build method of the State. Fields in a Widget subclass are
-  // always marked "final".
-
-  final String title;
+  BuriBuri({Key key}) : super(key: key);
 
   @override
   _BuriBuriState createState() => _BuriBuriState();
 }
 
-class _BuriBuriState extends State<BuriBuri> {
-  int _counter = 0;
+@JsonSerializable(explicitToJson: true)
+class Payment {
+  DateTime date;
+  int money;
+  String reason;
+  String memo;
 
-  void _incrementCounter() {
-    setState(() {
-      // This call to setState tells the Flutter framework that something has
-      // changed in this State, which causes it to rerun the build method below
-      // so that the display can reflect the updated values. If we changed
-      // _counter without calling setState(), then the build method would not be
-      // called again, and so nothing would appear to happen.
-      _counter++;
-    });
+  Payment(this.date, this.money, this.reason, this.memo);
+
+  factory Payment.fromJson(Map<String, dynamic> json) =>
+      _$PaymentFromJson(json);
+  Map<String, dynamic> toJson() => _$PaymentToJson(this);
+}
+
+class _BuriBuriState extends State<BuriBuri> {
+  var payment = Payment(DateTime.now(), null, null, null);
+
+  Future<void> selectDate(BuildContext context) async {
+    final DateTime selected = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(DateTime.now().year - 1),
+      lastDate: DateTime(DateTime.now().year + 1),
+      locale: const Locale('ja'),
+    );
+
+    if (selected != null) {
+      setState(() {
+        payment.date = selected;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    // This method is rerun every time setState is called, for instance as done
-    // by the _incrementCounter method above.
-    //
-    // The Flutter framework has been optimized to make rerunning build methods
-    // fast, so that you can just rebuild anything that needs updating rather
-    // than having to individually change instances of widgets.
     return Scaffold(
       appBar: AppBar(
-        // Here we take the value from the BuriBuri object that was created by
-        // the App.build method, and use it to set our appbar title.
-        // title: Text(widget.title),
         title: Image.asset('assets/title.png'),
         backgroundColor: Color(0xffffffff),
         elevation: 0, // hide shadow
         toolbarHeight: 200,
       ),
-      body: Center(
-        // Center is a layout widget. It takes a single child and positions it
-        // in the middle of the parent.
+      body: Container(
+        margin: EdgeInsets.fromLTRB(20, 0, 20, 0),
         child: Column(
-          // Column is also a layout widget. It takes a list of children and
-          // arranges them vertically. By default, it sizes itself to fit its
-          // children horizontally, and tries to be as tall as its parent.
-          //
-          // Invoke "debug painting" (press "p" in the console, choose the
-          // "Toggle Debug Paint" action from the Flutter Inspector in Android
-          // Studio, or the "Toggle Debug Paint" command in Visual Studio Code)
-          // to see the wireframe for each widget.
-          //
-          // Column has various properties to control how it sizes itself and
-          // how it positions its children. Here we use mainAxisAlignment to
-          // center the children vertically; the main axis here is the vertical
-          // axis because Columns are vertical (the cross axis would be
-          // horizontal).
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            Text(
-              'You have pushed the button this many times:',
+            FlatButton(
+              child: Text(
+                  DateFormat.yMMMMEEEEd('ja')
+                      .format(payment.date)
+                      .replaceAllMapped(RegExp(r'(.)曜日'), (match) {
+                    return '(${match.group(1)})';
+                  }),
+                  style: TextStyle(fontSize: 38)),
+              onPressed: () => selectDate(context),
             ),
-            Text(
-              '$_counter',
-              style: Theme.of(context).textTheme.headline4,
+            Container(
+                child: TextField(
+              decoration:
+                  InputDecoration(labelText: 'いくら？', hintText: '例 1,234'),
+              style: TextStyle(fontSize: 30),
+              // autofocus: false,
+              textAlign: TextAlign.right,
+              maxLength: 8,
+              // keyboardType: TextInputType.number,
+              keyboardType:
+                  TextInputType.numberWithOptions(signed: true, decimal: true),
+              inputFormatters: <TextInputFormatter>[
+                WhitelistingTextInputFormatter.digitsOnly,
+              ],
+              onSubmitted: (String value) {
+                setState(() {
+                  payment.money = int.tryParse(value, radix: 10);
+                });
+              },
+            )),
+            Container(
+              alignment: Alignment.topLeft,
+              child: Text(
+                'なんで？',
+                style: TextStyle(
+                    fontSize: 20, color: Color.fromRGBO(100, 100, 100, 1.0)),
+                textAlign: TextAlign.left,
+              ),
             ),
+            DropdownButton<String>(
+              // icon: Icon(Icons.arrow_downward),
+              value: payment.reason,
+              isExpanded: true,
+              items: <String>['', 'おこずかい', 'おてつだい'].map((String value) {
+                return DropdownMenuItem<String>(
+                  value: value,
+                  child: Text(value, style: TextStyle(fontSize: 30)),
+                );
+              }).toList(),
+              onChanged: (String value) {
+                setState(() {
+                  payment.reason = value;
+                });
+              },
+            ),
+            Container(
+                child: TextField(
+              decoration: InputDecoration(labelText: 'メモ', hintText: '例 ありがとう'),
+              style: TextStyle(fontSize: 30),
+              maxLength: 140,
+              // keyboardType: TextInputType.multiline,
+              // maxLines: null,
+              onSubmitted: (String value) {
+                setState(() {
+                  payment.memo = value;
+                });
+              },
+            )),
+            RaisedButton(
+                child: Text('あげる', style: TextStyle(fontSize: 98)),
+                color: Colors.white,
+                shape: const OutlineInputBorder(
+                  borderRadius: BorderRadius.all(Radius.circular(10)),
+                ),
+                onPressed: () {
+                  print(json.encode(payment));
+                  showDialog(
+                      context: context,
+                      builder: (_) {
+                        return AlertDialog(
+                          content: Container(
+                              width: 320,
+                              height: 320,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: <Widget>[
+                                  QrImage(
+                                    data: json.encode(payment),
+                                    version: QrVersions.auto,
+                                    size: 320,
+                                    embeddedImage:
+                                        AssetImage('assets/qricon.png'),
+                                    embeddedImageStyle: QrEmbeddedImageStyle(
+                                      size: Size(50, 50),
+                                    ),
+                                  ),
+                                ],
+                              )),
+                          actions: <Widget>[
+                            FlatButton(
+                              child: Text("閉じる"),
+                              onPressed: () => Navigator.pop(context),
+                            ),
+                          ],
+                        );
+                      });
+                }),
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _incrementCounter,
-        tooltip: 'Increment',
-        child: Icon(Icons.add),
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      bottomNavigationBar: BottomNavigationBar(
+        items: <BottomNavigationBarItem>[
+          BottomNavigationBarItem(
+              icon: Icon(Icons.history), title: Text('きろく')),
+          BottomNavigationBarItem(
+              icon: Icon(Icons.settings), title: Text('せってい')),
+        ],
+        type: BottomNavigationBarType.fixed,
+      ),
     );
   }
 }
