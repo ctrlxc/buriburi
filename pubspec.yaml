@@ -27,6 +27,7 @@ dependencies:
     sdk: flutter
   qr_flutter: ^3.1.0
   json_annotation:
+  keyboard_actions: "^3.3.1+1"
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
