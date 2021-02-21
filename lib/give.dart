@@ -24,7 +24,7 @@ class _GiveState extends State<Give> {
       children: <Widget>[
         Flexible(
           child: TextFormField(
-            decoration: InputDecoration(labelText: 'いくら？', hintText: '例 1,234'),
+            decoration: InputDecoration(labelText: 'いくら？', hintText: '123'),
             style: TextStyle(fontSize: 30),
             // autofocus: false,
             textAlign: TextAlign.right,
@@ -45,7 +45,7 @@ class _GiveState extends State<Give> {
             },
             validator: (value) {
               if (value.isEmpty) {
-                return '数値を入力してください';
+                return 'すうじをいれてね';
               }
             },
           ),
@@ -58,7 +58,7 @@ class _GiveState extends State<Give> {
     );
 
     var memoWidget = TextFormField(
-      decoration: InputDecoration(labelText: 'メモ', hintText: '例 ありがとう'),
+      decoration: InputDecoration(labelText: 'メモ', hintText: 'ありがとう'),
       style: TextStyle(fontSize: 30),
       maxLength: 140,
       autofocus: false,
