@@ -12,7 +12,7 @@ class Give extends StatefulWidget {
   _GiveState createState() => _GiveState();
 }
 
-class _GiveState extends State<Give> with RouteAware {
+class _GiveState extends State<Give> {
   final _form = GlobalKey<FormState>();
   var payment = Payment(DateTime.now(), null, null, null);
 
