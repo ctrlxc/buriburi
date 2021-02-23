@@ -12,23 +12,29 @@ class Give extends StatefulWidget {
   _GiveState createState() => _GiveState();
 }
 
-class _GiveState extends State<Give> {
+class _GiveState extends State<Give> with RouteAware {
   final _form = GlobalKey<FormState>();
   var payment = Payment(DateTime.now(), null, null, null);
 
   @override
   Widget build(BuildContext context) {
+    final moneyNode = FocusNode();
     final memoNode = FocusNode();
 
-    var moneyWidget = Row(
+    final moneyWidget = Row(
       children: <Widget>[
         Flexible(
           child: TextFormField(
-            decoration: InputDecoration(labelText: 'いくら？', hintText: '123'),
+            focusNode: moneyNode,
+            decoration: InputDecoration(
+              labelText: 'いくら？',
+              hintText: '123',
+              floatingLabelBehavior: FloatingLabelBehavior.always,
+            ),
             style: TextStyle(fontSize: 30),
             // autofocus: false,
             textAlign: TextAlign.right,
-            autofocus: false,
+            autofocus: true,
             maxLength: 8,
             // keyboardType: TextInputType.number,
             textInputAction: TextInputAction.next,
@@ -37,16 +43,24 @@ class _GiveState extends State<Give> {
             inputFormatters: <TextInputFormatter>[
               WhitelistingTextInputFormatter.digitsOnly,
             ],
+            onChanged: (_) {
+              if (_form.currentState.validate()) {
+                _form.currentState.save();
+              }
+            },
             onFieldSubmitted: (_) {
-              memoNode.requestFocus();
+              // memoNode.requestFocus();
             },
             onSaved: (String value) {
               payment.money = int.tryParse(value, radix: 10);
             },
             validator: (value) {
-              if (value.isEmpty) {
+              if (value.isEmpty ||
+                  !new RegExp(r'^[0-9]{1,8}$').hasMatch(value)) {
+                moneyNode.requestFocus();
                 return 'すうじをいれてね';
               }
+              return null;
             },
           ),
         ),
@@ -57,43 +71,57 @@ class _GiveState extends State<Give> {
       ],
     );
 
-    var memoWidget = TextFormField(
-      decoration: InputDecoration(labelText: 'メモ', hintText: 'ありがとう'),
+    final memoWidget = TextFormField(
+      decoration: InputDecoration(
+        labelText: 'メモ',
+        hintText: 'いつもありがとう',
+        floatingLabelBehavior: FloatingLabelBehavior.always,
+      ),
       style: TextStyle(fontSize: 30),
       maxLength: 140,
       autofocus: false,
       keyboardType: TextInputType.multiline,
       // textInputAction: TextInputAction.done,
-      maxLines: 2,
+      maxLines: 3,
       focusNode: memoNode,
       onSaved: (String value) {
         payment.memo = value;
       },
     );
 
-    var giveWidget = RaisedButton(
-      child: Text('あげる', style: TextStyle(fontSize: 80)),
-      color: Colors.white,
-      shape: const OutlineInputBorder(
-        borderRadius: BorderRadius.all(Radius.circular(10)),
-      ),
-      onPressed: () {
-        if (_form.currentState.validate()) {
-          _form.currentState.save();
-          Navigator.pushNamed(context, '/giveqr', arguments: payment);
-        }
+    return GestureDetector(
+      onTap: () {
+        FocusScope.of(context).unfocus();
       },
-    );
-
-    return Form(
-      key: _form,
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          moneyWidget,
-          memoWidget,
-          giveWidget,
-        ],
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text('あげる？'),
+        ),
+        body: SafeArea(
+          child: Form(
+            key: _form,
+            child: Column(
+              // mainAxisAlignment: MainAxisAlignment.center,
+              children: <Widget>[
+                moneyWidget,
+                memoWidget,
+              ],
+            ),
+          ),
+        ),
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            if (_form.currentState.validate()) {
+              FocusScope.of(context).unfocus();
+              _form.currentState.save();
+              Navigator.of(context)
+                  .pushReplacementNamed('/giveqr', arguments: payment);
+              // Navigator.pushNamed(context, '/giveqr', arguments: payment);
+            }
+          },
+          tooltip: 'あげる',
+          child: Text('あげる', style: TextStyle(fontSize: 80)),
+        ),
       ),
     );
   }

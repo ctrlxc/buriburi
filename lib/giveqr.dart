@@ -34,6 +34,14 @@ class GiveQr extends StatelessWidget {
       ),
     ]);
 
+    final memo = Text(
+      payment.memo?.replaceAll('\n', ' ')?.replaceAll(RegExp(r' +'), ' '),
+      maxLines: 1,
+      // textHeightBehavior: TextHeightBehavior(),
+      style: TextStyle(fontSize: 24, height: 1),
+      overflow: TextOverflow.ellipsis,
+    );
+
     final qrimage = QrImage(
       data: json.encode(payment),
       version: QrVersions.auto,
@@ -47,7 +55,7 @@ class GiveQr extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text("ブリブリ QRコード"),
+        title: Text('あげるよ'),
       ),
       body: Center(
         child: Column(
@@ -59,6 +67,8 @@ class GiveQr extends StatelessWidget {
                 date,
                 Container(height: 10),
                 money,
+                Container(height: 10),
+                memo,
               ],
             ),
             qrimage,

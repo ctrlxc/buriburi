@@ -15,26 +15,29 @@ class BuriBuriApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        localizationsDelegates: [
-          GlobalMaterialLocalizations.delegate,
-          GlobalWidgetsLocalizations.delegate,
-          GlobalCupertinoLocalizations.delegate,
-        ],
-        supportedLocales: [
-          // const Locale('en'),
-          const Locale('ja'),
-        ],
-        title: 'BuriBuri',
-        theme: ThemeData(
-          primarySwatch: Colors.red,
-          visualDensity: VisualDensity.adaptivePlatformDensity,
-          fontFamily: "Azuki",
-        ),
-        initialRoute: '/',
-        routes: <String, WidgetBuilder>{
-          '/': (BuildContext context) => BuriBuri(),
-          '/giveqr': (BuildContext context) => GiveQr(),
-        });
+      localizationsDelegates: [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: [
+        // const Locale('en'),
+        const Locale('ja'),
+      ],
+      title: 'BuriBuri',
+      theme: ThemeData(
+        primarySwatch: Colors.red,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
+        fontFamily: "Azuki",
+      ),
+      initialRoute: '/',
+      routes: <String, WidgetBuilder>{
+        '/': (BuildContext context) => BuriBuri(),
+        '/give': (BuildContext context) => Give(),
+        '/giveqr': (BuildContext context) => GiveQr(),
+        // @@@ '/take': (BuildContext context) => Take(),
+      },
+    );
   }
 }
 
@@ -42,7 +45,9 @@ class BuriBuri extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => FocusScope.of(context).unfocus(),
+      onTap: () {
+        FocusScope.of(context).unfocus();
+      },
       child: Scaffold(
         body: SafeArea(
           child: CustomScrollView(
@@ -54,22 +59,56 @@ class BuriBuri extends StatelessWidget {
                   toolbarHeight: 180),
               SliverList(
                 delegate: SliverChildListDelegate(
-                  <Widget>[
-                    Give(),
-                  ],
+                  <Widget>[],
                 ),
               ),
             ],
           ),
         ),
-        bottomNavigationBar: BottomNavigationBar(
-          items: <BottomNavigationBarItem>[
-            BottomNavigationBarItem(
-                icon: Icon(Icons.history), title: Text('きろく')),
-            BottomNavigationBarItem(
-                icon: Icon(Icons.settings), title: Text('せってい')),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+        floatingActionButton: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: <Widget>[
+            FloatingActionButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/give');
+              },
+              tooltip: 'あげる？',
+              child: Text('あげる？', style: TextStyle(fontSize: 32)),
+            ),
+            Padding(padding: EdgeInsets.symmetric(horizontal: 5.0)),
+            FloatingActionButton(
+              onPressed: () {
+                Navigator.pushNamed(context, '/take');
+              },
+              tooltip: 'もらう？',
+              child: Text('もらう？', style: TextStyle(fontSize: 32)),
+            ),
           ],
-          type: BottomNavigationBarType.fixed,
+        ),
+        bottomNavigationBar: BottomAppBar(
+          // color: Theme.of(context).primaryColor,
+          // notchMargin: 6.0,
+          shape: AutomaticNotchedShape(
+            RoundedRectangleBorder(),
+            StadiumBorder(
+              side: BorderSide(),
+            ),
+          ),
+          child: Row(
+            children: <Widget>[
+              IconButton(
+                icon: Icon(Icons.history),
+                tooltip: 'きろく',
+                onPressed: () {},
+              ),
+              IconButton(
+                icon: Icon(Icons.settings),
+                tooltip: 'せってい',
+                onPressed: () {},
+              ),
+            ],
+          ),
         ),
       ),
     );
