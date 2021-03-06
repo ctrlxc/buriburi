@@ -4,12 +4,11 @@ part 'payment.g.dart';
 
 @JsonSerializable(explicitToJson: true)
 class Payment {
-  DateTime date;
-  int money;
-  String reason;
-  String memo;
+  DateTime? date;
+  int? money;
+  String? memo;
 
-  Payment(this.date, this.money, this.reason, this.memo);
+  Payment(this.date, this.money, this.memo);
 
   factory Payment.fromJson(Map<String, dynamic> json) =>
       _$PaymentFromJson(json);

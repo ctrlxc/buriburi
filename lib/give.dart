@@ -2,19 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:keyboard_actions/keyboard_actions.dart';
 import 'payment.dart';
 
 class Give extends StatefulWidget {
-  Give({Key key}) : super(key: key);
+  Give({Key? key}) : super(key: key);
 
   @override
   _GiveState createState() => _GiveState();
 }
 
 class _GiveState extends State<Give> {
-  final _form = GlobalKey<FormState>();
-  var payment = Payment(DateTime.now(), null, null, null);
+  final _formKey = GlobalKey<FormState>();
+  var payment = Payment(DateTime.now(), null, null);
 
   @override
   Widget build(BuildContext context) {
@@ -44,18 +43,19 @@ class _GiveState extends State<Give> {
               WhitelistingTextInputFormatter.digitsOnly,
             ],
             onChanged: (_) {
-              if (_form.currentState.validate()) {
-                _form.currentState.save();
+              if (_formKey.currentState!.validate()) {
+                _formKey.currentState!.save();
               }
             },
             onFieldSubmitted: (_) {
               // memoNode.requestFocus();
             },
-            onSaved: (String value) {
-              payment.money = int.tryParse(value, radix: 10);
+            onSaved: (String? value) {
+              payment.money = int.tryParse(value ?? '', radix: 10);
             },
             validator: (value) {
-              if (value.isEmpty ||
+              if (value == null ||
+                  value.isEmpty ||
                   !new RegExp(r'^[0-9]{1,8}$').hasMatch(value)) {
                 moneyNode.requestFocus();
                 return 'すうじをいれてね';
@@ -84,7 +84,7 @@ class _GiveState extends State<Give> {
       // textInputAction: TextInputAction.done,
       maxLines: 3,
       focusNode: memoNode,
-      onSaved: (String value) {
+      onSaved: (String? value) {
         payment.memo = value;
       },
     );
@@ -99,7 +99,7 @@ class _GiveState extends State<Give> {
         ),
         body: SafeArea(
           child: Form(
-            key: _form,
+            key: _formKey,
             child: Column(
               // mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
@@ -111,12 +111,11 @@ class _GiveState extends State<Give> {
         ),
         floatingActionButton: FloatingActionButton(
           onPressed: () {
-            if (_form.currentState.validate()) {
+            if (_formKey.currentState!.validate()) {
               FocusScope.of(context).unfocus();
-              _form.currentState.save();
+              _formKey.currentState!.save();
               Navigator.of(context)
                   .pushReplacementNamed('/giveqr', arguments: payment);
-              // Navigator.pushNamed(context, '/giveqr', arguments: payment);
             }
           },
           tooltip: 'あげる',

@@ -11,13 +11,14 @@ import 'payment.dart';
 class GiveQr extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    final Payment payment = ModalRoute.of(context).settings.arguments;
+    final Payment payment =
+        ModalRoute.of(context)!.settings.arguments as Payment;
 
     print(json.encode(payment));
 
     var date = Text(
         DateFormat.yMMMMEEEEd('ja')
-            .format(payment.date)
+            .format(payment.date!)
             .replaceAllMapped(RegExp(r'(.)曜日'), (match) {
           return '(${match.group(1)})';
         }),
@@ -35,7 +36,7 @@ class GiveQr extends StatelessWidget {
     ]);
 
     final memo = Text(
-      payment.memo?.replaceAll('\n', ' ')?.replaceAll(RegExp(r' +'), ' '),
+      payment.memo!.replaceAll('\n', ' ').replaceAll(RegExp(r' +'), ' '),
       maxLines: 1,
       // textHeightBehavior: TextHeightBehavior(),
       style: TextStyle(fontSize: 24, height: 1),

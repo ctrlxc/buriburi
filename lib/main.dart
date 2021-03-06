@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:flutter/cupertino.dart';
-import 'package:keyboard_actions/keyboard_actions.dart';
 
 import 'give.dart';
 import 'giveqr.dart';
+import 'take.dart';
 
 void main() {
   runApp(BuriBuriApp());
@@ -35,7 +35,7 @@ class BuriBuriApp extends StatelessWidget {
         '/': (BuildContext context) => BuriBuri(),
         '/give': (BuildContext context) => Give(),
         '/giveqr': (BuildContext context) => GiveQr(),
-        // @@@ '/take': (BuildContext context) => Take(),
+        '/take': (BuildContext context) => Take(),
       },
     );
   }
