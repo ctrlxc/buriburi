@@ -76,10 +76,10 @@ class _BarcodeScannerState extends State<BarcodeScanner> {
         !_camera!.value.isInitialized) {
       return Center(
         child: Text(
-          'QRコードがにんしきできません',
+          'QRコードをカメラにかざしてください',
           style: TextStyle(
             color: Colors.greenAccent,
-            fontSize: 10,
+            fontSize: 14,
           ),
         ),
       );
