@@ -6,8 +6,8 @@ import 'package:camera/camera.dart';
 import 'package:firebase_ml_vision/firebase_ml_vision.dart';
 import 'package:flutter/foundation.dart';
 
-class ScannerUtils {
-  ScannerUtils._();
+class BarcodeScannerUtils {
+  BarcodeScannerUtils._();
 
   static Future<CameraDescription> getCamera(CameraLensDirection dir) async {
     return availableCameras().then(

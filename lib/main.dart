@@ -5,8 +5,7 @@ import 'package:flutter/cupertino.dart';
 
 import 'give.dart';
 import 'giveqr.dart';
-// import 'take.dart';
-import 'barcode_scanner.dart';
+import 'take.dart';
 
 void main() {
   runApp(BuriBuriApp());
@@ -36,7 +35,7 @@ class BuriBuriApp extends StatelessWidget {
         '/': (BuildContext context) => BuriBuri(),
         '/give': (BuildContext context) => Give(),
         '/giveqr': (BuildContext context) => GiveQr(),
-        '/take': (BuildContext context) => BarcodeScanner(), // Take(),
+        '/take': (BuildContext context) => Take(),
       },
     );
   }

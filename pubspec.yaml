@@ -28,11 +28,10 @@ dependencies:
   qr_flutter: ^3.1.0
   json_annotation:
   keyboard_actions: "^3.3.1+1"
-  # barcode_scan: "^3.0.1"
   camera: ^0.7.0+2
   firebase_core: ^0.5.3
   firebase_ml_vision: ^0.10.0
-  # qr_code_scanner: ^0.3.5
+  torch_controller: ^0.2.1+2
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.

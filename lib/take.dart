@@ -1,197 +1,171 @@
 import 'package:camera/camera.dart';
 import 'package:firebase_ml_vision/firebase_ml_vision.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+import 'package:torch_controller/torch_controller.dart';
+
+import 'barcode_painter.dart';
+import 'barcode_scanner_utils.dart';
 
 class Take extends StatefulWidget {
+  const Take({Key? key}) : super(key: key);
+
   @override
-  TakeState createState() => TakeState();
+  State<StatefulWidget> createState() => _TakeState();
 }
 
-class TakeState extends State<Take> {
-  final _scaffoldKey = GlobalKey<ScaffoldState>();
+class _TakeState extends State<Take> {
+  List<Barcode>? _scanResults;
+  CameraController? _camera;
+  bool _isDetecting = false;
+  CameraLensDirection _direction = CameraLensDirection.back;
 
-  List<CameraDescription> _cameras = [];
-  CameraController? _cameraController;
+  TorchController? _torch;
+  bool _isTorchOn = false;
 
-  final _barcodeDetector = FirebaseVision.instance.barcodeDetector();
-
-  // bool _shouldSkipScanning;
-  String _scaned = "scaned";
+  final BarcodeDetector _barcodeDetector =
+      FirebaseVision.instance.barcodeDetector();
 
   @override
   void initState() {
     super.initState();
+    _initializeCamera();
+    _initializeTorch();
+  }
 
-    availableCameras().then((value) {
-      if (value.isEmpty) {
-        showAlertDialog("カメラがみつかりません").then((_) {
-          Navigator.pop(context);
-        });
+  Future<void> _initializeCamera() async {
+    final description = await BarcodeScannerUtils.getCamera(_direction);
 
-        return;
-      }
+    _camera = CameraController(
+      description,
+      defaultTargetPlatform == TargetPlatform.iOS
+          ? ResolutionPreset.low
+          : ResolutionPreset.medium,
+    );
 
-      _cameras = value;
-      _cameraController = CameraController(_cameras[0], ResolutionPreset.high);
-      _cameraController!.initialize().then((_) {
-        if (!mounted) {
-          return;
-        }
+    await _camera!.initialize();
 
-        setState(() {});
+    await _camera!.startImageStream((CameraImage image) {
+      if (_isDetecting) return;
 
-        scanQr();
+      _isDetecting = true;
+
+      BarcodeScannerUtils.detect(
+        image: image,
+        detectInImage: _barcodeDetector.detectInImage,
+        imageRotation: description.sensorOrientation,
+      ).then(
+        (dynamic results) {
+          setState(() {
+            _scanResults = results;
+          });
+        },
+      ).whenComplete(() => _isDetecting = false);
+    });
+  }
+
+  Future<void> _initializeTorch() async {
+    _torch = TorchController();
+    _torch!.initialize();
+  }
+
+  Widget _buildResults() {
+    if (_scanResults == null ||
+        _scanResults!.isEmpty ||
+        _camera == null ||
+        !_camera!.value.isInitialized) {
+      return Center(
+        child: Text(
+          'QRコードをカメラにかざしてください',
+          style: TextStyle(
+            color: Colors.greenAccent,
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+
+    final imageSize = Size(
+      _camera!.value.previewSize.height,
+      _camera!.value.previewSize.width,
+    );
+
+    return CustomPaint(
+      painter: BarcodeDetectorPainter(imageSize, _scanResults!),
+    );
+  }
+
+  Widget _buildImage() {
+    return Container(
+      constraints: const BoxConstraints.expand(),
+      child: _camera == null
+          ? const Center(
+              child: CircularProgressIndicator(),
+            )
+          : Stack(
+              fit: StackFit.expand,
+              children: <Widget>[
+                Container(
+                  color: Colors.black,
+                ),
+                CameraPreview(_camera),
+                _buildResults(),
+              ],
+            ),
+    );
+  }
+
+  Future<void> _toggleCameraDirection() async {
+    if (_direction == CameraLensDirection.back) {
+      _direction = CameraLensDirection.front;
+    } else {
+      _direction = CameraLensDirection.back;
+    }
+
+    await _camera?.stopImageStream();
+    await _camera?.dispose();
+
+    setState(() {
+      _camera = null;
+    });
+
+    await _initializeCamera();
+  }
+
+  Future<void> _toggleTorch() async {
+    setState(() {
+      _torch?.toggle().then((on) {
+        _isTorchOn = on;
       });
     });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.black87,
+      extendBodyBehindAppBar: true,
+      appBar: AppBar(
+        title: const Text('もらう？'),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+      ),
+      body: _buildImage(),
+      floatingActionButton: FloatingActionButton(
+        onPressed: _toggleTorch,
+        child: _isTorchOn
+            ? const Icon(Icons.flash_off)
+            : const Icon(Icons.flash_on),
+      ),
+    );
   }
 
   @override
   void dispose() {
-    _cameraController?.dispose();
-    super.dispose();
-  }
-
-  // @override
-  // void didChangeAppLifecycleState(AppLifecycleState state) {
-  //   // App state changed before we got the chance to initialize.
-  //   if (_cameraController == null || !_cameraController.value.isInitialized) {
-  //     return;
-  //   }
-  //   if (state == AppLifecycleState.inactive) {
-  //     _cameraController?.dispose();
-  //   } else if (state == AppLifecycleState.resumed) {
-  //     if (_cameraController != null) {
-  //       onNewCameraSelected(_cameraController.description);
-  //     }
-  //   }
-  // }
-
-  @override
-  Widget build(BuildContext context) {
-    Widget? body;
-
-    if (_cameraController != null && _cameraController!.value.isInitialized) {
-      body = Column(
-        mainAxisSize: MainAxisSize.max,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Stack(
-            alignment: Alignment.center,
-            children: <Widget>[
-              AspectRatio(
-                aspectRatio: MediaQuery.of(context).size.aspectRatio,
-                child: CameraPreview(
-                  _cameraController,
-                ),
-              ),
-              Column(
-                children: <Widget>[
-                  Container(
-                    height: MediaQuery.of(context).size.height * 0.3,
-                  ),
-                  FittedBox(
-                    child: Text(
-                      _scaned,
-                      style: TextStyle(
-                        color: Colors.greenAccent,
-                        fontSize: 40.0,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ],
-      );
-    } else {
-      body = Center(
-        child: CircularProgressIndicator(),
-      );
-    }
-
-    return Scaffold(
-      key: _scaffoldKey,
-      appBar: AppBar(
-        title: Text('もらう？'),
-      ),
-      body: body,
-    );
-  }
-
-  Future<void> scanQr() async {
-    var _isScanBusy = false;
-    _cameraController!.startImageStream((image) async {
-      if (_isScanBusy) {
-        // print("busy");
-        return;
-      }
-
-      _isScanBusy = true;
-
-      final scan = _barcodeDetector.detectInImage(
-        FirebaseVisionImage.fromBytes(
-          image.planes.first.bytes,
-          buildMetadata(image),
-        ),
-      );
-
-      scan.then((barcodes) {
-        if (barcodes.isNotEmpty) {
-          setState(() {
-            _scaned = barcodes.first.rawValue;
-          });
-        }
-
-        _isScanBusy = false;
-      });
+    _camera?.dispose().then((_) {
+      _barcodeDetector.close();
     });
-  }
 
-  FirebaseVisionImageMetadata buildMetadata(CameraImage image) {
-    return FirebaseVisionImageMetadata(
-      rawFormat: image.format.raw,
-      size: Size(
-        image.width.toDouble(),
-        image.height.toDouble(),
-      ),
-      rotation: ImageRotation.rotation270,
-      planeData: image.planes.map(
-        (plane) {
-          return FirebaseVisionImagePlaneMetadata(
-            bytesPerRow: plane.bytesPerRow,
-            height: plane.height,
-            width: plane.width,
-          );
-        },
-      ).toList(),
-    );
-  }
-
-  void showInSnackBar(String message) {
-    // ignore: deprecated_member_use
-    _scaffoldKey.currentState?.showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  Future<void> showAlertDialog(String message) async {
-    return showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (_) {
-        return AlertDialog(
-          // title: Text("タイトル"),
-          content: Text(message),
-          actions: <Widget>[
-            FlatButton(
-              child: Text("OK"),
-              onPressed: () {
-                Navigator.pop(context);
-              },
-            ),
-          ],
-        );
-      },
-    );
+    super.dispose();
   }
 }
