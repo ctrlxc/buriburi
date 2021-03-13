@@ -67,13 +67,14 @@ class _TakeState extends State<Take> {
         },
       ).then((_) {
         if (_scanResults != null && _scanResults!.isNotEmpty) {
+          // @@@ need validation
+
           _camera!.stopImageStream().then((_) {
             final payment =
                 Payment.fromJson(json.decode(_scanResults![0].rawValue));
 
-            // for debug @@@
             Navigator.of(context)
-                .pushReplacementNamed('/giveqr', arguments: payment);
+                .pushReplacementNamed('/took', arguments: payment);
           });
         }
       }).whenComplete(() {

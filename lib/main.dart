@@ -6,6 +6,7 @@ import 'package:flutter/cupertino.dart';
 import 'give.dart';
 import 'giveqr.dart';
 import 'take.dart';
+import 'took.dart';
 
 void main() {
   runApp(BuriBuriApp());
@@ -36,6 +37,7 @@ class BuriBuriApp extends StatelessWidget {
         '/give': (BuildContext context) => Give(),
         '/giveqr': (BuildContext context) => GiveQr(),
         '/take': (BuildContext context) => Take(),
+        '/took': (BuildContext context) => Took(),
       },
     );
   }
