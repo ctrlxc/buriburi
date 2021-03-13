@@ -1,3 +1,6 @@
+import 'dart:convert';
+
+import 'package:buriburi/payment.dart';
 import 'package:camera/camera.dart';
 import 'package:firebase_ml_vision/firebase_ml_vision.dart';
 import 'package:flutter/foundation.dart';
@@ -56,11 +59,26 @@ class _TakeState extends State<Take> {
         imageRotation: description.sensorOrientation,
       ).then(
         (dynamic results) {
+          if (!mounted) return;
+
           setState(() {
             _scanResults = results;
           });
         },
-      ).whenComplete(() => _isDetecting = false);
+      ).then((_) {
+        if (_scanResults != null && _scanResults!.isNotEmpty) {
+          _camera!.stopImageStream().then((_) {
+            final payment =
+                Payment.fromJson(json.decode(_scanResults![0].rawValue));
+
+            // for debug @@@
+            Navigator.of(context)
+                .pushReplacementNamed('/giveqr', arguments: payment);
+          });
+        }
+      }).whenComplete(() {
+        _isDetecting = false;
+      });
     });
   }
 
@@ -70,10 +88,10 @@ class _TakeState extends State<Take> {
   }
 
   Widget _buildResults() {
-    if (_scanResults == null ||
-        _scanResults!.isEmpty ||
-        _camera == null ||
-        !_camera!.value.isInitialized) {
+    if (_camera == null ||
+        !_camera!.value.isInitialized ||
+        _scanResults == null ||
+        _scanResults!.isEmpty) {
       return Center(
         child: Text(
           'QRコードをカメラにかざしてください',
