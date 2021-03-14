@@ -107,10 +107,6 @@ class _TakeState extends State<Take> {
       return false;
     }
 
-    if (_camera != null) {
-      await _camera!.stopImageStream();
-    }
-
     Timer(Duration(seconds: 1), () {
       Navigator.of(context).pushReplacementNamed('/took', arguments: payment);
     });
@@ -124,29 +120,13 @@ class _TakeState extends State<Take> {
   }
 
   Widget _buildResults() {
-    if (_pickedImage != null &&
-        _imageSize != null &&
-        _scanResults != null &&
-        _scanResults!.isNotEmpty) {
-      return Container(
-        constraints: const BoxConstraints.expand(),
-        decoration: BoxDecoration(
-          image: DecorationImage(
-            image: Image.file(_pickedImage!).image,
-            fit: BoxFit.fill,
-          ),
-        ),
-        child: CustomPaint(
-          painter: BarcodeDetectorPainter(_imageSize!, _scanResults!),
-        ),
-      );
-    }
-
-    if (_camera == null) {
-      return Container();
-    }
-
     if (_imageSize == null || _scanResults == null || _scanResults!.isEmpty) {
+      if (_pickedImage != null) {
+        return Center(
+          child: CircularProgressIndicator(),
+        );
+      }
+
       return Center(
         child: Text(
           'QRコードをカメラにかざしてください',
@@ -164,6 +144,18 @@ class _TakeState extends State<Take> {
   }
 
   Widget _buildCamera() {
+    if (_pickedImage != null) {
+      return Container(
+        constraints: const BoxConstraints.expand(),
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: Image.file(_pickedImage!).image,
+            fit: BoxFit.fill,
+          ),
+        ),
+      );
+    }
+
     if (_camera == null) {
       return Center(
         child: CircularProgressIndicator(),
@@ -255,22 +247,30 @@ class _TakeState extends State<Take> {
   }
 
   Future _image() async {
+    await _camera?.stopImageStream();
+    await _camera?.dispose();
+    _camera = null;
+
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
     );
 
     // cancel
     if (result == null) {
+      _initializeCamera();
       return;
     }
 
     final file = File(result.files.single.path);
 
+    setState(() {
+      _pickedImage = file;
+    });
+
     final imageSize = await _getImageSize(file);
     final results = await _scanBarcode(file);
 
     setState(() {
-      _pickedImage = file;
       _imageSize = imageSize;
       _scanResults = results;
     });
@@ -285,6 +285,8 @@ class _TakeState extends State<Take> {
         _imageSize = null;
         _scanResults = null;
       });
+
+      _initializeCamera();
     }
   }
 
