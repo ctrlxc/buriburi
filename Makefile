@@ -22,5 +22,9 @@ build:
 	# $(FLUTTER) build apk --no-sound-null-safety 
 
 .PHONY: run
-build:
+run:
 	$(FLUTTER) run --no-sound-null-safety
+
+.PHONY: run-release
+run-release:
+	$(FLUTTER) run --no-sound-null-safety --release

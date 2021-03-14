@@ -21,13 +21,23 @@ class BarcodeDetectorPainter extends CustomPainter {
       );
     }
 
-    final paint = Paint()
+    final inner = Paint()..color = Colors.green.withOpacity(0.2);
+
+    final outer = Paint()
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0
+      ..strokeWidth = 5.0
       ..color = Colors.green;
 
-    for (final Barcode barcode in barcodeLocations) {
-      canvas.drawRect(scaleRect(barcode), paint);
+    for (final barcode in barcodeLocations) {
+      final r = scaleRect(barcode);
+      canvas.drawRect(r, inner);
+      canvas.drawRect(r, outer);
+
+      var isRelease = const bool.fromEnvironment('dart.vm.product');
+
+      if (isRelease) {
+        continue;
+      }
 
       final t = TextPainter()
         ..text = TextSpan(
